@@ -1,5 +1,9 @@
-import streamlit as st
+import sys
+from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+import streamlit as st
 from src.predict import predict_job, get_indicators
 from src.duplicate_detector import calculate_similarity
 
