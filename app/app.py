@@ -1,0 +1,328 @@
+import streamlit as st
+
+from src.predict import predict_job, get_indicators
+from src.duplicate_detector import calculate_similarity
+
+
+# ==================================================
+# Page Configuration
+# ==================================================
+
+st.set_page_config(
+    page_title="Fake Job Advertisement Detector",
+    page_icon="🔎",
+    layout="centered"
+)
+
+
+# ==================================================
+# Header
+# ==================================================
+
+st.title("🔎 Fake Job Advertisement Detector")
+
+st.write(
+    "Paste a job advertisement below to assess whether "
+    "it is likely legitimate or potentially fraudulent."
+)
+
+st.info(
+    "This tool provides a machine-learning-based assessment. "
+    "It should be used as a screening aid, not as definitive "
+    "proof of fraud."
+)
+
+
+# ==================================================
+# Analyse One Job Advertisement
+# ==================================================
+
+st.subheader("Job Advertisement")
+
+job_text = st.text_area(
+    "Paste the complete job advertisement below:",
+    height=300,
+    placeholder="Paste the complete job advertisement here..."
+)
+
+
+# ==================================================
+# Prediction
+# ==================================================
+
+if st.button(
+    "Analyse Job Advertisement",
+    type="primary"
+):
+
+    if not job_text.strip():
+
+        st.warning(
+            "Please enter a job advertisement first."
+        )
+
+    else:
+
+        # ------------------------------------------
+        # Run ML prediction and risk detection
+        # ------------------------------------------
+
+        result = predict_job(job_text)
+
+
+        # ------------------------------------------
+        # Assessment Result
+        # ------------------------------------------
+
+        st.subheader("Assessment Result")
+
+        if result["prediction"] == 1:
+
+            st.error(
+                "⚠️ Potentially Fraudulent"
+            )
+
+        else:
+
+            st.success(
+                "✅ Likely Legitimate"
+            )
+
+
+        # ------------------------------------------
+        # Fraud Probability
+        # ------------------------------------------
+
+        probability = result["fraud_probability"]
+
+        st.metric(
+            "Estimated Fraud Probability",
+            f"{probability:.1%}"
+        )
+
+        st.progress(probability)
+
+        st.caption(
+            "0% = very low estimated fraud probability | "
+            "100% = very high estimated fraud probability"
+        )
+
+        st.caption(
+            "The probability represents the model's estimated "
+            "likelihood that the advertisement belongs to the "
+            "fraudulent class."
+        )
+
+
+
+
+        # ------------------------------------------
+        # Additional Risk Indicators
+        # ------------------------------------------
+
+        risk_indicators = result.get(
+            "risk_indicators",
+            []
+        )
+
+        if risk_indicators:
+
+            st.subheader(
+                "Additional Risk Indicators"
+            )
+
+            st.write(
+                "The following patterns may require "
+                "additional review."
+            )
+
+            st.write(
+                "They are not definitive evidence of fraud."
+            )
+
+            for item in risk_indicators:
+
+                category = item["category"].replace(
+                    "_",
+                    " "
+                ).title()
+
+                phrase = item["phrase"]
+
+                st.warning(
+                    f"**{category}** — {phrase}"
+                )
+
+        else:
+
+            st.success(
+                "No additional rule-based risk indicators "
+                "were identified."
+            )
+
+        st.caption(
+            "Risk indicators are based on predefined patterns "
+            "and should not be interpreted as definitive "
+            "evidence of fraud."
+        )
+
+
+# ==================================================
+# Compare Two Job Advertisements
+# ==================================================
+
+st.divider()
+
+st.subheader(
+    " Compare Two Job Advertisements"
+)
+
+st.write(
+    "Compare two job advertisements to identify potentially "
+    "reused or duplicated job-ad content."
+)
+
+
+# ------------------------------------------
+# Job A
+# ------------------------------------------
+
+job_a_compare = st.text_area(
+    "Job Advertisement A",
+    height=250,
+    placeholder=(
+        "Paste the first job advertisement here..."
+    ),
+    key="job_a_compare"
+)
+
+
+# ------------------------------------------
+# Job B
+# ------------------------------------------
+
+job_b_compare = st.text_area(
+    "Job Advertisement B",
+    height=250,
+    placeholder=(
+        "Paste the second job advertisement here..."
+    ),
+    key="job_b_compare"
+)
+
+
+# ------------------------------------------
+# Compare Button
+# ------------------------------------------
+
+if st.button(
+    "Compare Job Advertisements",
+    type="secondary"
+):
+
+    if (
+        not job_a_compare.strip()
+        or not job_b_compare.strip()
+    ):
+
+        st.warning(
+            "Please enter both job advertisements "
+            "before comparing."
+        )
+
+    else:
+
+        # Calculate textual similarity
+        similarity = calculate_similarity(
+            job_a_compare,
+            job_b_compare
+        )
+
+
+        # ------------------------------------------
+        # Similarity Result
+        # ------------------------------------------
+
+        st.subheader(
+            "Similarity Assessment"
+        )
+
+        st.metric(
+            "Content Similarity",
+            f"{similarity:.2%}"
+        )
+
+        st.progress(
+            similarity
+        )
+
+
+        # ------------------------------------------
+        # Interpretation
+        # ------------------------------------------
+
+        if similarity >= 0.90:
+
+            st.error(
+                "🔴 High Content Similarity"
+            )
+
+            st.write(
+                "These advertisements contain substantial "
+                "textual overlap and may represent reused "
+                "or duplicated job-ad content."
+            )
+
+            st.write(
+                "Consider verifying whether the employer, "
+                "job title, and position details are genuine."
+            )
+
+
+        elif similarity >= 0.70:
+
+            st.warning(
+                "🟡 Moderate Content Similarity"
+            )
+
+            st.write(
+                "Some substantial wording overlap was detected. "
+                "The advertisements may share a template or "
+                "similar structure."
+            )
+
+
+        else:
+
+            st.success(
+                "🟢 Low Content Similarity"
+            )
+
+            st.write(
+                "No strong evidence of duplicated wording "
+                "was detected between these advertisements."
+            )
+
+
+        # ------------------------------------------
+        # Disclaimer
+        # ------------------------------------------
+
+        st.caption(
+            "Similarity is based on textual patterns and "
+            "should not be interpreted as definitive "
+            "evidence of fraud."
+        )
+
+
+# ==================================================
+# Footer
+# ==================================================
+
+st.divider()
+
+st.caption(
+    "Fake Job Advertisement Detector | "
+    "Machine Learning + Rule-Based Risk Analysis + "
+    "Text Similarity Detection"
+)
