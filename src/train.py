@@ -5,6 +5,7 @@ import pandas as pd
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score,
@@ -110,68 +111,84 @@ print(f"TF-IDF testing shape: {X_test_tfidf.shape}")
 
 
 # --------------------------------------------------
-# 7. Train Logistic Regression model
+# 7. Train and evaluate comparison models
 # --------------------------------------------------
 
-print("Training Logistic Regression model...")
+models = {
+    "Logistic Regression": LogisticRegression(
+        class_weight="balanced",
+        max_iter=1000,
+        random_state=42
+    ),
+    "Random Forest": RandomForestClassifier(
+        n_estimators=200,
+        class_weight="balanced",
+        random_state=42,
+        n_jobs=-1
+    ),
+}
 
-model = LogisticRegression(
-    class_weight="balanced",
-    max_iter=1000,
-    random_state=42
-)
+evaluation_results = {}
 
-model.fit(X_train_tfidf, y_train)
+for model_name, candidate_model in models.items():
+    print(f"\nTraining {model_name} model...")
+    candidate_model.fit(X_train_tfidf, y_train)
 
-print("Model training completed.")
+    y_pred = candidate_model.predict(X_test_tfidf)
 
+    evaluation_results[model_name] = {
+        "model": candidate_model,
+        "predictions": y_pred,
+        "accuracy": accuracy_score(y_test, y_pred),
+        "precision": precision_score(y_test, y_pred, zero_division=0),
+        "recall": recall_score(y_test, y_pred, zero_division=0),
+        "f1": f1_score(y_test, y_pred, zero_division=0),
+    }
 
-# --------------------------------------------------
-# 8. Make predictions
-# --------------------------------------------------
-
-y_pred = model.predict(X_test_tfidf)
-
-
-# --------------------------------------------------
-# 9. Evaluate model
-# --------------------------------------------------
-
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-
-print("\n===== MODEL EVALUATION =====")
-
-print(f"Accuracy : {accuracy:.4f}")
-print(f"Precision: {precision:.4f}")
-print(f"Recall   : {recall:.4f}")
-print(f"F1-score : {f1:.4f}")
-
-print("\nClassification Report:")
-print(classification_report(
-    y_test,
-    y_pred,
-    target_names=["Legitimate", "Fraudulent"]
-))
-
-print("Confusion Matrix:")
-print(confusion_matrix(y_test, y_pred))
+    print(f"{model_name} training completed.")
 
 
 # --------------------------------------------------
-# 10. Save model and vectorizer
+# 8. Print comparison results
 # --------------------------------------------------
 
-print("\nSaving model...")
+for model_name, result in evaluation_results.items():
+    print(f"\n===== {model_name} EVALUATION =====")
+    print(f"Accuracy : {result['accuracy']:.4f}")
+    print(f"Precision: {result['precision']:.4f}")
+    print(f"Recall   : {result['recall']:.4f}")
+    print(f"F1-score : {result['f1']:.4f}")
+
+    print("\nClassification Report:")
+    print(classification_report(
+        y_test,
+        result["predictions"],
+        labels=[0, 1],
+        target_names=["Legitimate", "Fraudulent"],
+        zero_division=0
+    ))
+
+    print("Confusion Matrix (rows=actual, columns=predicted; labels=[0, 1]):")
+    print(confusion_matrix(
+        y_test,
+        result["predictions"],
+        labels=[0, 1]
+    ))
+
+
+# --------------------------------------------------
+# 9. Save the current deployed Logistic Regression model
+# --------------------------------------------------
+
+print("\nSaving Logistic Regression model and TF-IDF vectorizer...")
 
 MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-joblib.dump(model, MODEL_PATH)
+deployed_model = evaluation_results["Logistic Regression"]["model"]
+joblib.dump(deployed_model, MODEL_PATH)
 joblib.dump(tfidf, VECTORIZER_PATH)
 
-print(f"Model saved to: {MODEL_PATH}")
+print(f"Logistic Regression model saved to: {MODEL_PATH}")
 print(f"Vectorizer saved to: {VECTORIZER_PATH}")
 
-print("\nTraining pipeline completed successfully!")
+print("\nTraining and comparison pipeline completed successfully!")
