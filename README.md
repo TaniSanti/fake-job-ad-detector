@@ -67,7 +67,7 @@ The project includes a simple web interface that allows users to paste a job adv
 
 ## 📊 Model Comparison
 
-Both models were evaluated on the same stratified 80/20 train/test split of the dataset, using `random_state=42). TF-IDF was fitted on the training data only, with 20,000 maximum features and unigram/bigram features.
+Both models were evaluated on the same stratified 80/20 train/test split of the dataset, using `random_state=42`. TF-IDF was fitted on the training data only, with 20,000 maximum features and unigram/bigram features.
 
 | Fraud-class metric | Logistic Regression | Random Forest |
 |---|---:|---:|
