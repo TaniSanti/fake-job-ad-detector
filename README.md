@@ -65,32 +65,35 @@ The project includes a simple web interface that allows users to paste a job adv
 
 ---
 
-## 📊 Model Performance
+## 📊 Model Comparison
 
-The final model was evaluated on a held-out test dataset.
+Both models were evaluated on the same stratified 80/20 train/test split of the dataset, using `random_state=42). TF-IDF was fitted on the training data only, with 20,000 maximum features and unigram/bigram features.
 
-| Metric | Score |
-|---|---:|
-| Accuracy | **98.24%** |
-| Precision | **76.70%** |
-| Recall | **91.33%** |
-| F1-score | **83.38%** |
+| Fraud-class metric | Logistic Regression | Random Forest |
+|---|---:|---:|
+| Accuracy | **98.24%** | 98.15% |
+| Precision | 76.70% | **96.52%** |
+| Recall | **91.33%** | 64.16% |
+| F1-score | **83.38%** | 77.08% |
 
-### Classification Report
+The held-out test set contained **3,576 advertisements**: 3,403 legitimate and 173 fraudulent.
 
-| Class | Precision | Recall | F1-score |
-|---|---:|---:|---:|
-| Legitimate | 0.99 | 0.99 | 0.99 |
-| Fraudulent | 0.77 | 0.91 | 0.83 |
+### Confusion matrices
 
-The test set contained **3,576 advertisements**, including 3,403 legitimate and 173 fraudulent advertisements.
+Rows are actual classes and columns are predicted classes, ordered as `[Legitimate, Fraudulent]`.
 
-### Confusion Matrix
+**Logistic Regression**
 
 ```text
-                 Predicted
-              Legitimate  Fraudulent
+[[3355   48]
+ [  15  158]]
+```
 
-Actual
-Legitimate       3355        48
-Fraudulent         15       158
+**Random Forest**
+
+```text
+[[3399    4]
+ [  62  111]]
+```
+
+Logistic Regression detected 158 of the 173 fraudulent advertisements and missed 15. Random Forest detected 111 and missed 62. Random Forest produced fewer false positives (4 versus 48), while Logistic Regression had higher fraud recall and F1-score. Logistic Regression remains the deployed model because this screening application should avoid missing potentially fraudulent ads. The benchmark does not establish that either model will perform the same way on future job advertisements; the test set contains only 173 fraudulent examples, and results are from one split.
