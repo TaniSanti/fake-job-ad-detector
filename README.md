@@ -69,7 +69,7 @@ The project includes a simple web interface that allows users to paste a job adv
 
 Both models were evaluated on the same stratified 80/20 train/test split of the dataset, using `random_state=42`. TF-IDF was fitted on the training data only, with 20,000 maximum features and unigram/bigram features.
 
-| Fraud-class metric | Logistic Regression | Random Forest |
+| Metric (fraud is the positive class) | Logistic Regression | Random Forest |
 |---|---:|---:|
 | Accuracy | **98.24%** | 98.15% |
 | Precision | 76.70% | **96.52%** |
