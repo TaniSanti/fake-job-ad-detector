@@ -13,7 +13,10 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     classification_report,
-    confusion_matrix
+    confusion_matrix,
+    average_precision_score,
+    precision_recall_curve,
+    auc
 )
 
 from src.preprocessing import TEXT_COLUMNS, clean_text
@@ -135,6 +138,8 @@ for model_name, candidate_model in models.items():
     candidate_model.fit(X_train_tfidf, y_train)
 
     y_pred = candidate_model.predict(X_test_tfidf)
+    y_score = candidate_model.predict_proba(X_test_tfidf)[:, 1]
+    precision_curve, recall_curve, _ = precision_recall_curve(y_test, y_score)
 
     evaluation_results[model_name] = {
         "model": candidate_model,
@@ -143,6 +148,8 @@ for model_name, candidate_model in models.items():
         "precision": precision_score(y_test, y_pred, zero_division=0),
         "recall": recall_score(y_test, y_pred, zero_division=0),
         "f1": f1_score(y_test, y_pred, zero_division=0),
+        "average_precision": average_precision_score(y_test, y_score),
+        "pr_auc_trapezoidal": auc(recall_curve, precision_curve),
     }
 
     print(f"{model_name} training completed.")
@@ -158,6 +165,14 @@ for model_name, result in evaluation_results.items():
     print(f"Precision: {result['precision']:.4f}")
     print(f"Recall   : {result['recall']:.4f}")
     print(f"F1-score : {result['f1']:.4f}")
+    print(
+        "PR-AUC (average precision, non-interpolated): "
+        f"{result['average_precision']:.4f}"
+    )
+    print(
+        "PR-AUC (trapezoidal): "
+        f"{result['pr_auc_trapezoidal']:.4f}"
+    )
 
     print("\nClassification Report:")
     print(classification_report(
