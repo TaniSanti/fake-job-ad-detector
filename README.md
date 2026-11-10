@@ -75,6 +75,8 @@ Both models were evaluated on the same stratified 80/20 train/test split of the 
 | Precision | 76.70% | **96.52%** |
 | Recall | **91.33%** | 64.16% |
 | F1-score | **83.38%** | 77.08% |
+| PR-AUC (average precision, non-interpolated) | **0.9351** | 0.8947 |
+| PR-AUC (trapezoidal) | **0.9350** | 0.8961 |
 
 The held-out test set contained **3,576 advertisements**: 3,403 legitimate and 173 fraudulent.
 
