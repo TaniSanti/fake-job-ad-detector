@@ -123,5 +123,5 @@ These are synthetic phrase-coverage tests for the configured rules, not a test a
 Run the rule tests from the repository root:
 
 ```powershell
-& ".\\.venv\\Scripts\\python.exe" -m unittest discover -s tests -v
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
