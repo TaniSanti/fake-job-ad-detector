@@ -43,47 +43,75 @@ st.info(
 
 st.subheader("Job Advertisement")
 
-BANK_DETAILS_WARNING_EXAMPLES = {
-    "BSB and account number request": (
-        "Provide your BSB and account number to proceed with recruitment."
-    ),
-    "Bank account details before employment": (
-        "Send us your bank account details before employment."
-    ),
-    "Banking information before employment": (
-        "Provide your banking information before employment."
-    ),
-    "Personal bank details to proceed": (
-        "Send your personal bank details to proceed with recruitment."
-    ),
-}
+SCAMWATCH_EXAMPLE_ADS = [
+    {
+        "title": "Example 1 — Remote product-rating assistant",
+        "signs": "High income for little effort, no interview, product-rating tasks, and an early BSB request.",
+        "text": (
+            "Remote Product Rating Assistant\\n"
+            "We are hiring a fully remote product rating assistant. Earn a high "
+            "income for little effort, working from home for a few hours each day. "
+            "No experience required. The hiring process is quick and no interview "
+            "is required. Your tasks will include rating products. Provide your "
+            "BSB and account number to proceed with recruitment."
+        ),
+    },
+    {
+        "title": "Example 2 — Online product-task assistant",
+        "signs": "High pay for easy tasks, cryptocurrency top-ups, and banking details requested before employment.",
+        "text": (
+            "Online Product Task Assistant\\n"
+            "Complete simple tasks from home and earn high pay for a few hours "
+            "each day. Your work includes rating products. Before you begin, top "
+            "up your cryptocurrency account to unlock tasks and receive your "
+            "commission. Provide your banking information before employment."
+        ),
+    },
+    {
+        "title": "Example 3 — Remote payment-processing assistant",
+        "signs": "No interview, transfers through a personal bank account, and an early personal-bank-details request.",
+        "text": (
+            "Remote Payment Processing Assistant\\n"
+            "No interview required. Receive money into your personal bank account, "
+            "then transfer money to other accounts for our clients. We will provide "
+            "a commission for each transfer. Send your personal bank details before "
+            "an interview to continue recruitment."
+        ),
+    },
+    {
+        "title": "Example 4 — Urgent remote assistant",
+        "signs": "Limited positions, immediate action, guaranteed income for little work, and bank details requested to proceed.",
+        "text": (
+            "Urgent Remote Assistant — Only 20 positions available. Apply "
+            "immediately. We guarantee high income for little work. This is a "
+            "fully remote role and no experience is required. The hiring process "
+            "is quick and no interview is required. Send us your bank account "
+            "details to proceed with recruitment."
+        ),
+    },
+]
 
-selected_bank_example = st.selectbox(
-    "Optional: try a personal banking warning example",
-    ["Choose an example"] + list(BANK_DETAILS_WARNING_EXAMPLES),
-    key="bank_details_example",
-)
-
-if st.button(
-    "Load selected warning example",
-    disabled=selected_bank_example == "Choose an example",
+with st.expander(
+    "Copyable sample advertisements using Scamwatch warning signs",
+    expanded=True,
 ):
-    st.session_state["job_ad_text"] = BANK_DETAILS_WARNING_EXAMPLES[
-        selected_bank_example
-    ]
+    st.caption(
+        "Copy an example into the analysis box, then click Analyse. "
+        "These fictional samples demonstrate warning indicators; they are "
+        "not proof that a real job is fraudulent."
+    )
 
-st.caption(
-    "These examples demonstrate rule-based screening prompts; "
-    "they are not proof that a job is fraudulent."
-)
+    for example in SCAMWATCH_EXAMPLE_ADS:
+        st.markdown(f"**{example['title']}**")
+        st.caption(example["signs"])
+        st.code(example["text"], language=None)
 
 job_text = st.text_area(
     "Paste the complete job advertisement below:",
     height=300,
-    placeholder="Paste the complete job advertisement here...",
+    placeholder="Paste a sample above or paste a real advertisement here...",
     key="job_ad_text",
 )
-
 
 # ==================================================
 # Prediction
