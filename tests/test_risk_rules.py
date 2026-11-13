@@ -26,6 +26,23 @@ class TestRiskRules(unittest.TestCase):
             ),
         )
 
+    def test_platform_account_top_up_using_cryptocurrency(self):
+        self.assertIn(
+            "upfront_payment",
+            self.categories(
+                "To unlock higher-value tasks and earn commission, "
+                "top up your platform account using cryptocurrency."
+            ),
+        )
+
+    def test_crypto_mention_without_top_up_is_not_flagged_as_payment(self):
+        self.assertNotIn(
+            "upfront_payment",
+            self.categories(
+                "The company accepts cryptocurrency payments from customers."
+            ),
+        )
+
     def test_high_income_with_little_effort(self):
         self.assertIn(
             "high_income_low_effort",
@@ -107,6 +124,14 @@ class TestRiskRules(unittest.TestCase):
             "task_based_work",
             self.categories(
                 "Earn commission by rating products and optimising product listings."
+            ),
+        )
+
+    def test_product_rating_hyphenated_task(self):
+        self.assertIn(
+            "task_based_work",
+            self.categories(
+                "Complete product-rating tasks through our online platform."
             ),
         )
 
