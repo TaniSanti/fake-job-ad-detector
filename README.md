@@ -105,20 +105,20 @@ Logistic Regression detected 158 of the 173 fraudulent advertisements and missed
 
 The rule checks below map warning signs described by [Scamwatch's jobs and employment scams guidance](https://www.scamwatch.gov.au/types-of-scams/jobs-and-employment-scams) and its [job recruitment scam alert](https://www.scamwatch.gov.au/about-us/news-and-alerts/scam-alert-job-recruitment-scams) to the implementation in `src/risk_rules.py`.
 
-| Scamwatch warning sign | Implemented category | Representative unit test | Expected code result |
+| Scamwatch warning sign | Implemented category | Representative unit test | Observed unit test result |
 |---|---|---|---|
-| Upfront recruitment/training fees or paying to unlock tasks | `upfront_payment` | `test_upfront_recruitment_fee`, `test_cryptocurrency_account_top_up` | Flagged |
-| High pay/income combined with little effort or easy tasks | `high_income_low_effort` | `test_high_income_with_little_effort` | Flagged when both parts are present |
-| No experience paired with remote work | `no_experience_remote_work` | `test_no_experience_with_remote_work` | Flagged when both parts are present |
-| Fast hiring without an interview | `quick_hiring_no_interview` | `test_quick_hiring_without_interview` | Flagged |
-| Receiving/transferring money or forwarding packages | `money_or_package_transfer` | `test_money_transfer_task`, `test_package_forwarding_task` | Flagged |
-| Product rating or listing-optimisation task work | `task_based_work` | `test_product_rating_task` | Flagged |
-| Artificial urgency or a limited number of positions | `urgent_recruitment` | `test_urgent_limited_positions` | Flagged |
-| Remote work alone | No category should match | `test_work_from_home_alone_is_not_flagged` | Not flagged |
-| No experience alone | No category should match | `test_no_experience_alone_is_not_flagged` | Not flagged |
-| Unpaid internship wording alone | No category should match | `test_unpaid_internship_phrase_alone_is_not_flagged` | Not flagged |
+| Upfront recruitment/training fees or paying to unlock tasks | `upfront_payment` | `test_upfront_recruitment_fee`, `test_cryptocurrency_account_top_up` | PASS — flagged |
+| High pay/income combined with little effort or easy tasks | `high_income_low_effort` | `test_high_income_with_little_effort` | PASS — flagged with both parts present |
+| No experience paired with remote work | `no_experience_remote_work` | `test_no_experience_with_remote_work` | PASS — flagged with both parts present |
+| Fast hiring without an interview | `quick_hiring_no_interview` | `test_quick_hiring_without_interview` | PASS — flagged |
+| Receiving/transferring money or forwarding packages | `money_or_package_transfer` | `test_money_transfer_task`, `test_package_forwarding_task` | PASS — flagged |
+| Product rating or listing-optimisation task work | `task_based_work` | `test_product_rating_task` | PASS — flagged |
+| Artificial urgency or a limited number of positions | `urgent_recruitment` | `test_urgent_limited_positions` | PASS — flagged |
+| Remote work alone | No category should match | `test_work_from_home_alone_is_not_flagged` | PASS — not flagged |
+| No experience alone | No category should match | `test_no_experience_alone_is_not_flagged` | PASS — not flagged |
+| Unpaid internship wording alone | No category should match | `test_unpaid_internship_phrase_alone_is_not_flagged` | PASS — not flagged |
 
-These are synthetic phrase-coverage tests for the configured rules, not a test against a labelled collection of real job ads. A passing test confirms that a phrase triggers the intended rule; it does not measure accuracy, precision, recall, or false-positive rates. The matcher sees only pasted text and cannot verify recruiter identity or detect contact-channel context that is absent from the advertisement. The rule weights are hand-set and are not calibrated probabilities.
+The local unit-test run reported 13/13 tests passing. These are synthetic phrase-coverage tests for the configured rules, not a test against a labelled collection of real job ads. A passing test confirms that a phrase triggers the intended rule; it does not measure accuracy, precision, recall, or false-positive rates. The matcher sees only pasted text and cannot verify recruiter identity or detect contact-channel context that is absent from the advertisement. The rule weights are hand-set and are not calibrated probabilities.
 
 Run the rule tests from the repository root:
 
