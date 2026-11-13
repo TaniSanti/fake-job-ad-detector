@@ -127,17 +127,19 @@ Run the rule tests from the repository root:
 ```
 
 
-## Job Advertisement Similarity Test Cases
+## Job Advertisement Similarity Benchmark
 
-The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The near-duplicate pair reuses the same customer-service advertisement with minor wording changes; the unrelated pair compares an accountant role with an orchard-worker role. A third test checks empty input.
+The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The app labels scores of at least 0.90 as high, scores from 0.70 to below 0.90 as moderate, and lower scores as low.
 
-| Test pair | Example roles/text | Expected result based on app thresholds |
-|---|---|---|
-| Near duplicate | Customer service representative ads with minor wording changes | Similarity >= 0.90 (high) |
-| Unrelated | Senior accountant ad vs. seasonal orchard worker ad | Similarity < 0.70 (low) |
-| Empty input | Empty string vs. non-empty ad | Similarity = 0.00 |
+| Test pair | Measured similarity | App interpretation |
+|---|---:|---|
+| Similar customer-service ads with minor wording changes | **0.8859** | Moderate |
+| Unrelated accountant and orchard-worker ads | **0.0715** | Low |
+| Empty input compared with a non-empty ad | **0.0000** | No similarity |
 
-The test prints the measured similarity for the first two pairs. These are controlled examples that check behavior against the app's display thresholds; they do not establish accuracy or performance on a representative dataset. Similarity measures shared wording, not whether either employer or advertisement is genuine.
+The first two measured scores came from a local run of the tests. In that run, 15 of 16 tests passed; the similar pair measured 0.8859, so it fell below the test's original high-similarity expectation of 0.90. The test now expects the moderate band (0.70 to below 0.90). Rerun the full suite to confirm the corrected expectation.
+
+These are controlled examples, not a representative evaluation dataset. They check that the cosine-similarity output agrees with the app's display bands for these pairs; they do not establish detection accuracy for real job advertisements. Similarity measures shared wording, not whether either employer or advertisement is genuine.
 
 Run both test modules from the repository root:
 
