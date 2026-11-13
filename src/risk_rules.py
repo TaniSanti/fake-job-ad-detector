@@ -42,6 +42,43 @@ RISK_PATTERNS = {
         ],
     },
 
+    "personal_bank_details_request": {
+        "weight": 30,
+        "patterns": [
+            "bsb and account number",
+            "bsb and bank account number",
+            "bank account details",
+            "banking information",
+            "personal bank details",
+            "personal banking details",
+            "personal banking information",
+        ],
+        "requires_any": [
+            "before employment",
+            "before starting work",
+            "before you start work",
+            "before an interview",
+            "before interview",
+            "to proceed with recruitment",
+            "to proceed with your application",
+            "to continue with your application",
+            "to secure the job",
+            "to secure this position",
+            "before we consider your application",
+        ],
+        "exclude_any": [
+            "payroll",
+            "salary payment",
+            "wage payment",
+            "deposit your pay",
+            "deposit your wages",
+            "onboarding",
+            "new starter paperwork",
+            "after accepting the offer",
+            "after you accept the offer",
+        ],
+    },
+
     "high_income_low_effort": {
         "weight": 30,
         "patterns": [
@@ -149,6 +186,10 @@ def detect_risk_indicators(text):
     matches = []
 
     for category, details in RISK_PATTERNS.items():
+        excluded_context = details.get("exclude_any", [])
+        if any(phrase in text_lower for phrase in excluded_context):
+            continue
+
         required_context = details.get("requires_any", [])
         if required_context and not any(
             phrase in text_lower for phrase in required_context
