@@ -127,7 +127,7 @@ Run the rule tests from the repository root:
 ```
 
 
-## Job Advertisement Similarity Benchmark
+## 7.3 Job Advertisement Similarity Evaluation
 
 The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The app labels scores of at least 0.90 as high, scores from 0.70 to below 0.90 as moderate, and lower scores as low.
 
@@ -137,7 +137,7 @@ The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The 
 | Unrelated accountant and orchard-worker ads | **0.0715** | Low |
 | Empty input compared with a non-empty ad | **0.0000** | No similarity |
 
-The local test run passed all 16 tests. The near-duplicate pair measured 0.8859 and the unrelated pair measured 0.0715.
+The latest local test run passed all 19 tests. The three similarity tests passed: the near-duplicate pair scored 0.8859 (moderate), the unrelated pair scored 0.0715 (low), and the empty-input case returned 0.0000.
 
 These are controlled examples, not a representative evaluation dataset. They check that the cosine-similarity output agrees with the app's display bands for these pairs; they do not establish detection accuracy for real job advertisements. Similarity measures shared wording, not whether either employer or advertisement is genuine.
 
