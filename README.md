@@ -125,3 +125,22 @@ Run the rule tests from the repository root:
 ```powershell
 & ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
+
+
+## Job Advertisement Similarity Test Cases
+
+The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The near-duplicate pair reuses the same customer-service advertisement with minor wording changes; the unrelated pair compares an accountant role with an orchard-worker role. A third test checks empty input.
+
+| Test pair | Example roles/text | Expected result based on app thresholds |
+|---|---|---|
+| Near duplicate | Customer service representative ads with minor wording changes | Similarity >= 0.90 (high) |
+| Unrelated | Senior accountant ad vs. seasonal orchard worker ad | Similarity < 0.70 (low) |
+| Empty input | Empty string vs. non-empty ad | Similarity = 0.00 |
+
+The test prints the measured similarity for the first two pairs. These are controlled examples that check behavior against the app's display thresholds; they do not establish accuracy or performance on a representative dataset. Similarity measures shared wording, not whether either employer or advertisement is genuine.
+
+Run both test modules from the repository root:
+
+```powershell
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
+```
