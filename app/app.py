@@ -43,10 +43,45 @@ st.info(
 
 st.subheader("Job Advertisement")
 
+BANK_DETAILS_WARNING_EXAMPLES = {
+    "BSB and account number request": (
+        "Provide your BSB and account number to proceed with recruitment."
+    ),
+    "Bank account details before employment": (
+        "Send us your bank account details before employment."
+    ),
+    "Banking information before employment": (
+        "Provide your banking information before employment."
+    ),
+    "Personal bank details to proceed": (
+        "Send your personal bank details to proceed with recruitment."
+    ),
+}
+
+selected_bank_example = st.selectbox(
+    "Optional: try a personal banking warning example",
+    ["Choose an example"] + list(BANK_DETAILS_WARNING_EXAMPLES),
+    key="bank_details_example",
+)
+
+if st.button(
+    "Load selected warning example",
+    disabled=selected_bank_example == "Choose an example",
+):
+    st.session_state["job_ad_text"] = BANK_DETAILS_WARNING_EXAMPLES[
+        selected_bank_example
+    ]
+
+st.caption(
+    "These examples demonstrate rule-based screening prompts; "
+    "they are not proof that a job is fraudulent."
+)
+
 job_text = st.text_area(
     "Paste the complete job advertisement below:",
     height=300,
-    placeholder="Paste the complete job advertisement here..."
+    placeholder="Paste the complete job advertisement here...",
+    key="job_ad_text",
 )
 
 
