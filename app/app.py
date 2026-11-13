@@ -48,7 +48,7 @@ SCAMWATCH_EXAMPLE_ADS = [
         "title": "Example 1 — Remote product-rating assistant",
         "signs": "High income for little effort, no interview, product-rating tasks, and an early BSB request.",
         "text": (
-            "Remote Product Rating Assistant\\n"
+            "Remote Product Rating Assistant\n"
             "We are hiring a fully remote product rating assistant. Earn a high "
             "income for little effort, working from home for a few hours each day. "
             "No experience required. The hiring process is quick and no interview "
@@ -60,7 +60,7 @@ SCAMWATCH_EXAMPLE_ADS = [
         "title": "Example 2 — Online product-task assistant",
         "signs": "High pay for easy tasks, cryptocurrency top-ups, and banking details requested before employment.",
         "text": (
-            "Online Product Task Assistant\\n"
+            "Online Product Task Assistant\n"
             "Complete simple tasks from home and earn high pay for a few hours "
             "each day. Your work includes rating products. Before you begin, top "
             "up your cryptocurrency account to unlock tasks and receive your "
@@ -71,7 +71,7 @@ SCAMWATCH_EXAMPLE_ADS = [
         "title": "Example 3 — Remote payment-processing assistant",
         "signs": "No interview, transfers through a personal bank account, and an early personal-bank-details request.",
         "text": (
-            "Remote Payment Processing Assistant\\n"
+            "Remote Payment Processing Assistant\n"
             "No interview required. Receive money into your personal bank account, "
             "then transfer money to other accounts for our clients. We will provide "
             "a commission for each transfer. Send your personal bank details before "
