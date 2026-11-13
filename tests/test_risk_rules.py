@@ -69,6 +69,31 @@ class TestRiskRules(unittest.TestCase):
             ),
         )
 
+    def test_suspicious_bsb_and_account_number_request(self):
+        self.assertIn(
+            "personal_bank_details_request",
+            self.categories(
+                "Provide your BSB and account number to proceed with recruitment."
+            ),
+        )
+
+    def test_personal_banking_information_before_employment(self):
+        self.assertIn(
+            "personal_bank_details_request",
+            self.categories(
+                "Provide your banking information before employment."
+            ),
+        )
+
+    def test_payroll_onboarding_request_is_not_flagged(self):
+        self.assertNotIn(
+            "personal_bank_details_request",
+            self.categories(
+                "During onboarding, provide your BSB and account number "
+                "so payroll can deposit your wages."
+            ),
+        )
+
     def test_package_forwarding_task(self):
         self.assertIn(
             "money_or_package_transfer",
