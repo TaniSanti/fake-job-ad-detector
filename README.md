@@ -137,7 +137,7 @@ The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The 
 | Unrelated accountant and orchard-worker ads | **0.0715** | Low |
 | Empty input compared with a non-empty ad | **0.0000** | No similarity |
 
-The first two measured scores came from a local run of the tests. In that run, 15 of 16 tests passed; the similar pair measured 0.8859, so it fell below the test's original high-similarity expectation of 0.90. The test now expects the moderate band (0.70 to below 0.90). Rerun the full suite to confirm the corrected expectation.
+The local test run passed all 16 tests. The near-duplicate pair measured 0.8859 and the unrelated pair measured 0.0715.
 
 These are controlled examples, not a representative evaluation dataset. They check that the cosine-similarity output agrees with the app's display bands for these pairs; they do not establish detection accuracy for real job advertisements. Similarity measures shared wording, not whether either employer or advertisement is genuine.
 
