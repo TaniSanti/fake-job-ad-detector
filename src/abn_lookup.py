@@ -279,3 +279,39 @@ def search_by_name(name, authentication_guid=None, secrets=None):
                     "match_score": _find_text(child, {"matchScore"}),
                 })
     return candidates
+
+
+def verify_business(abn="", company_name="", authentication_guid=None, secrets=None):
+    """Run ABN-only, name-only, or combined verification.
+
+    Name-only searches return candidate records for the user to choose from.
+    When an ABN is provided, the ABR entity record is returned and an optional
+    supplied company name is compared with the official entity name.
+    """
+    normalized_abn = normalize_abn(abn)
+    normalized_name = (company_name or "").strip()
+    if not normalized_abn and not normalized_name:
+        raise ABNLookupError("Enter an ABN or a company name to search.")
+
+    if normalized_abn:
+        entity = lookup_by_abn(
+            normalized_abn,
+            authentication_guid=authentication_guid,
+            secrets=secrets,
+        )
+        result = {"mode": "abn", "entity": entity}
+        if normalized_name:
+            result["name_comparison"] = compare_entity_name(
+                normalized_name,
+                entity.get("entity_name", ""),
+            )
+        return result
+
+    return {
+        "mode": "name",
+        "matches": search_by_name(
+            normalized_name,
+            authentication_guid=authentication_guid,
+            secrets=secrets,
+        ),
+    }
