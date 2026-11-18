@@ -146,3 +146,47 @@ Run both test modules from the repository root:
 ```powershell
 & ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
+
+
+## Business ABN Verification
+
+The app can query the official Australian Business Register (ABR) ABN Lookup Document Style Web Service. ABN checks use the latest documented `SearchByABNv202001` operation. Company-name searches use `ABRSearchByNameAdvancedSimpleProtocol2017`, which returns a list of possible matches. The requests are form-encoded HTTP POSTs to the official ABR service and the XML response is parsed by the application.
+
+ABN searches accept an 11-digit number with optional spaces or hyphens. The app extracts the first checksum-valid ABN it finds in the pasted advertisement, but users can edit the field. A search can use an ABN, a company name, or both. Name-only results can contain multiple possible businesses, which the user selects before requesting full details. With both fields supplied, the entered name is compared textually with the ABR entity name; a similar name is not proof that the advertiser represents that entity.
+
+The displayed response includes fields returned by ABR, such as ABN, entity name, status, entity type, GST registration information and state or territory when present. Registration date is shown only when it is provided in the response. Missing fields are displayed as unavailable. API errors are converted into short user-facing messages; credentials are not included in those messages.
+
+### Configure the ABR authentication GUID
+
+The GUID is never stored in the Python source or tests. For local PowerShell development, set it for the current terminal session before launching Streamlit:
+
+```powershell
+$env:ABR_AUTHENTICATION_GUID = "paste-your-own-guid-here"
+& ".\.venv\Scripts\python.exe" -m streamlit run app/app.py --server.port 8502
+```
+
+For Streamlit Cloud, add this in the app's **Settings → Secrets** area:
+
+```toml
+ABR_AUTHENTICATION_GUID = "paste-your-own-guid-here"
+```
+
+For local Streamlit Secrets, create `.streamlit/secrets.toml` with the same TOML key/value and keep it out of Git. The repository ignores this file. Do not paste the actual GUID into source files, tests, screenshots, issues, or chat messages. Environment configuration takes precedence over Streamlit Secrets.
+
+### Tests and manual check
+
+Run the mocked ABN tests:
+
+```powershell
+& ".\.venv\Scripts\python.exe" -m unittest tests.test_abn_lookup -v
+```
+
+Run the full suite:
+
+```powershell
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
+```
+
+Automated tests replace the network call with mocked XML responses. They do not prove that the configured GUID has service access or that a live ABR request succeeds. To check the real integration, configure your own GUID locally, launch Streamlit, paste an ad with an ABN or enter an ABN/business name in **Business ABN Verification**, and select **Verify Business**. A successful live lookup should display the ABR record.
+
+ABN verification confirms information recorded by the Australian Business Register. It does not confirm that a job advertisement or recruiter is genuine. An active ABN does not prove that the person contacting the job seeker represents the entity, that the advertisement was published by the entity, that the job exists, or that the recruitment process is legitimate. A missing or cancelled ABN is a prompt for further checking, not proof of fraud. The service may omit fields for suppressed records, and name matching is only a text comparison.
