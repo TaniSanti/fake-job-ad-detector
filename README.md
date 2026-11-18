@@ -118,12 +118,12 @@ The rule checks below map warning signs described by [Scamwatch's jobs and emplo
 | No experience alone | No category should match | `test_no_experience_alone_is_not_flagged` | PASS — not flagged |
 | Unpaid internship wording alone | No category should match | `test_unpaid_internship_phrase_alone_is_not_flagged` | PASS — not flagged |
 
-The local unit-test run reported 13/13 tests passing. These are synthetic phrase-coverage tests for the configured rules, not a test against a labelled collection of real job ads. A passing test confirms that a phrase triggers the intended rule; it does not measure accuracy, precision, recall, or false-positive rates. The matcher sees only pasted text and cannot verify recruiter identity or detect contact-channel context that is absent from the advertisement. The rule weights are hand-set and are not calibrated probabilities.
+The earlier rule-test run reported 13/13 passing. Since that run, additional rules and tests have been added, so that result is historical and is not the current branch's test count. Rerun the commands below for current results. These are synthetic phrase-coverage tests for the configured rules, not a test against a labelled collection of real job ads. A passing test confirms that a phrase triggers the intended rule; it does not measure accuracy, precision, recall, or false-positive rates. The matcher sees only pasted text and cannot verify recruiter identity or detect contact-channel context that is absent from the advertisement. The rule weights are hand-set and are not calibrated probabilities.
 
 Run the rule tests from the repository root:
 
 ```powershell
-& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -v
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -p "test_risk_rules.py" -v
 ```
 
 
@@ -137,7 +137,7 @@ The similarity tests use fixed pairs in `tests/test_duplicate_detector.py`. The 
 | Unrelated accountant and orchard-worker ads | **0.0715** | Low |
 | Empty input compared with a non-empty ad | **0.0000** | No similarity |
 
-The latest local test run passed all 19 tests. The three similarity tests passed: the near-duplicate pair scored 0.8859 (moderate), the unrelated pair scored 0.0715 (low), and the empty-input case returned 0.0000.
+A previous local run passed all 19 tests then present. The branch now contains additional rule and ABN tests, so that historical count does not represent the current branch. The three similarity tests passed in that earlier run: the near-duplicate pair scored 0.8859 (moderate), the unrelated pair scored 0.0715 (low), and the empty-input case returned 0.0000.
 
 These are controlled examples, not a representative evaluation dataset. They check that the cosine-similarity output agrees with the app's display bands for these pairs; they do not establish detection accuracy for real job advertisements. Similarity measures shared wording, not whether either employer or advertisement is genuine.
 
