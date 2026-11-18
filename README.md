@@ -178,7 +178,7 @@ For local Streamlit Secrets, create `.streamlit/secrets.toml` with the same TOML
 Run the mocked ABN tests:
 
 ```powershell
-& ".\.venv\Scripts\python.exe" -m unittest tests.test_abn_lookup -v
+& ".\.venv\Scripts\python.exe" -m unittest discover -s tests -p "test_abn_lookup.py" -v
 ```
 
 Run the full suite:
