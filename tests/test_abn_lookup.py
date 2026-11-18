@@ -167,6 +167,11 @@ class TestABNLookup(unittest.TestCase):
             with self.assertRaises(MissingCredentialsError):
                 lookup_by_abn(VALID_ABN)
 
+    @patch("src.abn_lookup.urlopen", side_effect=TimeoutError())
+    def test_api_timeout_is_sanitised(self, mocked_urlopen):
+        with self.assertRaisesRegex(ABNLookupError, "Could not connect"):
+            lookup_by_abn(VALID_ABN, authentication_guid="test-guid")
+
     @patch("src.abn_lookup.urlopen")
     def test_unexpected_api_response(self, mocked_urlopen):
         mocked_urlopen.return_value = self.mock_response(b"<not-xml")
