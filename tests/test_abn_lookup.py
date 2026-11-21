@@ -143,15 +143,43 @@ class TestABNLookup(unittest.TestCase):
         self.assertEqual(result["name_comparison"]["status"], "exact")
         mocked_lookup.assert_called_once()
 
+    @patch("src.abn_lookup.lookup_by_abn")
     @patch("src.abn_lookup.search_by_name")
-    def test_name_only_verification(self, mocked_search):
-        mocked_search.return_value = [{"abn": VALID_ABN}]
+    def test_name_only_verification_fills_entity_name_from_cancelled_abn(
+        self, mocked_search, mocked_lookup
+    ):
+        mocked_search.return_value = [{"abn": VALID_ABN, "entity_name": ""}]
+        mocked_lookup.return_value = {
+            "abn": VALID_ABN,
+            "entity_name": "Davina Example",
+            "status": "Cancelled",
+        }
         result = verify_business(
             company_name="Example",
             authentication_guid="test-guid",
         )
         self.assertEqual(result["mode"], "name")
         self.assertEqual(result["matches"][0]["abn"], VALID_ABN)
+        self.assertEqual(result["matches"][0]["entity_name"], "Davina Example")
+        self.assertEqual(result["matches"][0]["status"], "Cancelled")
+        mocked_lookup.assert_called_once_with(
+            VALID_ABN,
+            authentication_guid="test-guid",
+            secrets=None,
+        )
+
+    @patch("src.abn_lookup.lookup_by_abn", side_effect=ABNLookupError("temporary"))
+    @patch("src.abn_lookup.search_by_name")
+    def test_name_only_search_survives_failed_name_enrichment(
+        self, mocked_search, mocked_lookup
+    ):
+        mocked_search.return_value = [{"abn": VALID_ABN, "entity_name": ""}]
+        result = verify_business(
+            company_name="Example",
+            authentication_guid="test-guid",
+        )
+        self.assertEqual(result["matches"][0]["abn"], VALID_ABN)
+        self.assertEqual(result["matches"][0]["entity_name"], "")
 
     def test_no_search_input(self):
         with self.assertRaisesRegex(ABNLookupError, "Enter an ABN"):
