@@ -8,6 +8,7 @@ from src.abn_lookup import (
     MissingCredentialsError,
     compare_entity_name,
     extract_abn,
+    format_name_match,
     is_valid_abn,
     lookup_by_abn,
     search_by_name,
@@ -106,12 +107,26 @@ class TestABNLookup(unittest.TestCase):
         mocked_urlopen.return_value = self.mock_response(NAME_RESPONSE)
         matches = search_by_name("Example", authentication_guid="test-guid")
         self.assertEqual(len(matches), 2)
-        self.assertEqual(matches[0]["entity_name"], "Example Pty Ltd")
-        self.assertEqual(matches[1]["status"], "Cancelled")
+        self.assertEqual(matches[0]["matching_name"], "Example Pty Ltd")
+        self.assertEqual(matches[1]["matching_name"], "Example Services")
         request = mocked_urlopen.call_args.args[0]
         self.assertTrue(request.full_url.endswith(
             "/ABRSearchByNameAdvancedSimpleProtocol2017"
         ))
+        self.assertIn(b"searchWidth=Narrow", request.data)
+        self.assertIn(b"minimumScore=90", request.data)
+
+    def test_dropdown_distinguishes_matching_name_from_entity_name(self):
+        label = format_name_match({
+            "matching_name": "DAVINA",
+            "entity_name": "Dee Dee's Dream",
+            "abn": "93879273204",
+            "status": "Cancelled",
+        })
+        self.assertIn("DAVINA (matched name)", label)
+        self.assertIn("Entity: Dee Dee's Dream", label)
+        self.assertIn("ABN 93879273204", label)
+        self.assertNotIn("Cancelled", label)
 
     @patch("src.abn_lookup.urlopen")
     def test_company_name_not_found(self, mocked_urlopen):
