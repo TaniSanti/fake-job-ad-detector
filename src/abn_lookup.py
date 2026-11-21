@@ -281,6 +281,35 @@ def search_by_name(name, authentication_guid=None, secrets=None):
     return candidates
 
 
+
+def _fill_missing_entity_names(matches, authentication_guid=None, secrets=None):
+    """Fetch ABR entity details only where a name search returned no name.
+
+    Name searches can return a matching ABN without a usable display name.
+    A targeted ABN lookup supplies the entity name when ABR has one, including
+    for cancelled records. Failures for one candidate do not discard the
+    remaining name-search results.
+    """
+    enriched = []
+    for match in matches:
+        candidate = dict(match)
+        if not candidate.get("entity_name"):
+            try:
+                entity = lookup_by_abn(
+                    candidate.get("abn", ""),
+                    authentication_guid=authentication_guid,
+                    secrets=secrets,
+                )
+            except ABNLookupError:
+                entity = {}
+            if entity.get("entity_name"):
+                candidate["entity_name"] = entity["entity_name"]
+            elif entity.get("status") and not candidate.get("status"):
+                candidate["status"] = entity["status"]
+        enriched.append(candidate)
+    return enriched
+
+
 def verify_business(abn="", company_name="", authentication_guid=None, secrets=None):
     """Run ABN-only, name-only, or combined verification.
 
@@ -307,10 +336,15 @@ def verify_business(abn="", company_name="", authentication_guid=None, secrets=N
             )
         return result
 
+    name_matches = search_by_name(
+        normalized_name,
+        authentication_guid=authentication_guid,
+        secrets=secrets,
+    )
     return {
         "mode": "name",
-        "matches": search_by_name(
-            normalized_name,
+        "matches": _fill_missing_entity_names(
+            name_matches,
             authentication_guid=authentication_guid,
             secrets=secrets,
         ),
