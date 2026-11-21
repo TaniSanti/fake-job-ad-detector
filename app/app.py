@@ -287,7 +287,7 @@ if abn_result:
                 "Possible ABR matches",
                 options,
                 format_func=lambda index: (
-                    f"{matches[index].get('entity_name') or 'Name not provided'} — "
+                    f"{matches[index].get('entity_name') or 'ABR name unavailable'} — "
                     f"ABN {matches[index].get('abn')}"
                 ),
                 key=selection_key,
@@ -306,6 +306,11 @@ if abn_result:
                     st.error(str(error))
 
             selected_entity = st.session_state.get("abn_selected_entity")
+            if (
+                selected_entity
+                and selected_entity.get("abn") != selected_match.get("abn")
+            ):
+                selected_entity = None
             if selected_entity:
                 if selected_entity.get("status", "").lower() == "active":
                     st.success("The selected ABR record reports this ABN as Active.")
