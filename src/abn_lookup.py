@@ -91,6 +91,27 @@ def compare_entity_name(supplied_name, returned_name):
     return {"status": status, "similarity": ratio}
 
 
+
+def format_name_match(match):
+    """Format the matched ABR name separately from its legal/entity name."""
+    matching_name = (match.get("matching_name") or "").strip()
+    entity_name = (match.get("entity_name") or "").strip()
+    abn = match.get("abn") or "ABN unavailable"
+
+    if matching_name and entity_name and (
+        matching_name.casefold() != entity_name.casefold()
+    ):
+        return (
+            f"{matching_name} (matched name) — "
+            f"Entity: {entity_name} — ABN {abn}"
+        )
+    if matching_name:
+        return f"{matching_name} — ABN {abn}"
+    if entity_name:
+        return f"Entity: {entity_name} — ABN {abn}"
+    return f"ABR name unavailable — ABN {abn}"
+
+
 def _local_name(tag):
     return tag.rsplit("}", 1)[-1].lower()
 
