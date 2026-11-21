@@ -9,6 +9,7 @@ from src.duplicate_detector import calculate_similarity
 from src.abn_lookup import (
     ABNLookupError,
     extract_abn,
+    format_name_match,
     is_valid_abn,
     lookup_by_abn,
     verify_business,
@@ -286,10 +287,7 @@ if abn_result:
             selected_index = st.selectbox(
                 "Possible ABR matches",
                 options,
-                format_func=lambda index: (
-                    f"{matches[index].get('entity_name') or 'ABR name unavailable'} — "
-                    f"ABN {matches[index].get('abn')}"
-                ),
+                format_func=lambda index: format_name_match(matches[index]),
                 key=selection_key,
             )
             selected_match = matches[selected_index]
