@@ -304,7 +304,7 @@ def _fill_missing_entity_names(matches, authentication_guid=None, secrets=None):
                 entity = {}
             if entity.get("entity_name"):
                 candidate["entity_name"] = entity["entity_name"]
-            elif entity.get("status") and not candidate.get("status"):
+            if entity.get("status") and not candidate.get("status"):
                 candidate["status"] = entity["status"]
         enriched.append(candidate)
     return enriched
