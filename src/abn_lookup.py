@@ -233,8 +233,8 @@ def search_by_name(name, authentication_guid=None, secrets=None):
         "activeABNsOnly": "N",
         "NSW": "", "SA": "", "ACT": "", "VIC": "",
         "WA": "", "NT": "", "QLD": "", "TAS": "",
-        "searchWidth": "Typical",
-        "minimumScore": "80",
+        "searchWidth": "Narrow",
+        "minimumScore": "90",
         "maxSearchResults": "10",
     }
     root = _post_form(NAME_SEARCH_ENDPOINT, parameters, guid)
@@ -251,9 +251,13 @@ def search_by_name(name, authentication_guid=None, secrets=None):
         seen.add(abn)
         candidates.append({
             "abn": abn,
-            "entity_name": _find_text(
-                node, {"organisationName", "mainName", "matchingName", "name"}
+            # The name that matched the user's query can be a business name,
+            # while entity_name is the associated legal/main entity name.
+            "matching_name": (
+                _find_text(node, {"matchingName", "matchedName"})
+                or _find_text(node, {"name"})
             ),
+            "entity_name": _find_text(node, {"organisationName", "mainName"}),
             "status": _find_text(node, {"entityStatusCode", "abnStatus"}),
             "state": _find_text(node, {"stateCode"}),
             "match_score": _find_text(node, {"matchScore"}),
@@ -271,8 +275,12 @@ def search_by_name(name, authentication_guid=None, secrets=None):
                 seen.add(abn)
                 candidates.append({
                     "abn": abn,
+                    "matching_name": (
+                        _find_text(child, {"matchingName", "matchedName"})
+                        or _find_text(child, {"name"})
+                    ),
                     "entity_name": _find_text(
-                        child, {"organisationName", "mainName", "matchingName", "name"}
+                        child, {"organisationName", "mainName"}
                     ),
                     "status": _find_text(child, {"entityStatusCode", "abnStatus"}),
                     "state": _find_text(child, {"stateCode"}),
