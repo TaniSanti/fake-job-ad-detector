@@ -276,15 +276,21 @@ if abn_result:
                 "Select the business that appears relevant, then verify its ABN."
             )
             options = list(range(len(matches)))
+            # Give this widget a new key when the ABR candidate list changes.
+            # Streamlit otherwise preserves the old index and can show a stale
+            # selected label even though the opened menu has new candidates.
+            candidate_signature = "_".join(
+                str(match.get("abn", "")) for match in matches
+            )
+            selection_key = f"abn_match_selection_{candidate_signature}"
             selected_index = st.selectbox(
                 "Possible ABR matches",
                 options,
                 format_func=lambda index: (
                     f"{matches[index].get('entity_name') or 'Name not provided'} — "
-                    f"ABN {matches[index].get('abn')} — "
-                    f"{matches[index].get('status') or 'Status not provided'}"
+                    f"ABN {matches[index].get('abn')}"
                 ),
-                key="abn_match_selection",
+                key=selection_key,
             )
             selected_match = matches[selected_index]
             if st.button(
