@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from pathlib import Path
 
@@ -6,8 +7,14 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 from src.predict import predict_job, get_indicators
 from src.duplicate_detector import calculate_similarity
+from src.input_validation import (
+    MAIN_INSUFFICIENT_MESSAGE,
+    SIMILARITY_INSUFFICIENT_MESSAGE,
+    is_sufficient_advertisement,
+)
 from src.abn_lookup import (
     ABNLookupError,
+    INVALID_ABN_MESSAGE,
     extract_abn,
     format_name_match,
     is_valid_abn,
@@ -66,11 +73,9 @@ if st.button(
     type="primary"
 ):
 
-    if not job_text.strip():
-
-        st.warning(
-            "Please enter a job advertisement first."
-        )
+    if not is_sufficient_advertisement(job_text):
+        st.subheader("Insufficient Information")
+        st.info(MAIN_INSUFFICIENT_MESSAGE)
 
     else:
 
@@ -215,7 +220,7 @@ if st.button("Verify Business", key="verify_business_button"):
         st.warning("Enter an ABN or a business name to search.")
         st.session_state.pop("abn_lookup_result", None)
     elif abn_input.strip() and not is_valid_abn(abn_input):
-        st.error("The ABN must contain 11 digits and pass the ABN checksum.")
+        st.error(INVALID_ABN_MESSAGE)
         st.session_state.pop("abn_lookup_result", None)
     else:
         try:
@@ -280,9 +285,12 @@ if abn_result:
             # Give this widget a new key when the ABR candidate list changes.
             # Streamlit otherwise preserves the old index and can show a stale
             # selected label even though the opened menu has new candidates.
-            candidate_signature = "_".join(
-                str(match.get("abn", "")) for match in matches
-            )
+            candidate_signature = hashlib.sha256(
+                "\0".join(
+                    f"{match.get('abn', '')}-{match.get('matching_name', '')}"
+                    for match in matches
+                ).encode("utf-8")
+            ).hexdigest()[:20]
             selection_key = f"abn_match_selection_{candidate_signature}"
             selected_index = st.selectbox(
                 "Possible ABR matches",
@@ -396,15 +404,17 @@ if st.button(
     type="secondary"
 ):
 
-    if (
-        not job_a_compare.strip()
-        or not job_b_compare.strip()
-    ):
-
-        st.warning(
-            "Please enter both job advertisements "
-            "before comparing."
-        )
+    ad_a_sufficient = is_sufficient_advertisement(job_a_compare)
+    ad_b_sufficient = is_sufficient_advertisement(job_b_compare)
+    if not ad_a_sufficient or not ad_b_sufficient:
+        st.subheader("Insufficient Information")
+        if not ad_a_sufficient and not ad_b_sufficient:
+            st.warning("Advertisement A and Advertisement B need more information.")
+        elif not ad_a_sufficient:
+            st.warning("Advertisement A needs more information.")
+        else:
+            st.warning("Advertisement B needs more information.")
+        st.info(SIMILARITY_INSUFFICIENT_MESSAGE)
 
     else:
 

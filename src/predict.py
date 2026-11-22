@@ -4,6 +4,7 @@ import joblib
 
 from src.preprocessing import clean_text
 from src.risk_rules import detect_risk_indicators
+from src.input_validation import require_sufficient_advertisement
 
 
 # --------------------------------------------------
@@ -33,6 +34,10 @@ def predict_job(text):
     Predict whether a job advertisement is legitimate
     or potentially fraudulent.
     """
+
+    # Protect direct callers as well as the Streamlit form from meaningless
+    # input. No model/vectorizer method runs until this check passes.
+    require_sufficient_advertisement(text)
 
     # Clean the input text
     cleaned_text = clean_text(text)

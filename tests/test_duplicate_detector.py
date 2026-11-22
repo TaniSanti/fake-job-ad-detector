@@ -1,6 +1,8 @@
 import unittest
+from unittest.mock import patch
 
 from src.duplicate_detector import calculate_similarity
+from src.input_validation import InsufficientInformationError, is_sufficient_advertisement
 
 
 SIMILAR_ADS = (
@@ -34,11 +36,45 @@ class TestDuplicateDetector(unittest.TestCase):
         print(f"Unrelated pair similarity: {score:.4f}")
         self.assertLess(score, 0.70)
 
-    def test_empty_ad_returns_zero_similarity(self):
-        self.assertEqual(
-            calculate_similarity("", "A job advertisement with some content."),
-            0.0,
-        )
+    def test_empty_ad_is_rejected_without_similarity_score(self):
+        with self.assertRaises(InsufficientInformationError):
+            calculate_similarity("", "A job advertisement with some content.")
+
+    def test_meaningful_existing_pairs_pass_content_validation(self):
+        for text in (*SIMILAR_ADS, *UNRELATED_ADS):
+            with self.subTest(text=text[:40]):
+                self.assertTrue(is_sufficient_advertisement(text))
+
+    def test_both_empty_inputs_are_rejected_before_vectorization(self):
+        with patch("src.duplicate_detector.TfidfVectorizer") as vectorizer:
+            with self.assertRaises(InsufficientInformationError):
+                calculate_similarity("", "")
+        vectorizer.assert_not_called()
+
+    def test_one_empty_input_is_rejected_before_vectorization(self):
+        with patch("src.duplicate_detector.TfidfVectorizer") as vectorizer:
+            with self.assertRaises(InsufficientInformationError):
+                calculate_similarity("", SIMILAR_ADS[0])
+        vectorizer.assert_not_called()
+
+    def test_both_very_short_inputs_are_rejected_before_vectorization(self):
+        with patch("src.duplicate_detector.TfidfVectorizer") as vectorizer:
+            with self.assertRaises(InsufficientInformationError):
+                calculate_similarity("asds", "asd")
+        vectorizer.assert_not_called()
+
+    def test_one_insufficient_ad_is_rejected_before_vectorization(self):
+        with patch("src.duplicate_detector.TfidfVectorizer") as vectorizer:
+            with self.assertRaises(InsufficientInformationError):
+                calculate_similarity("sads", SIMILAR_ADS[0])
+        vectorizer.assert_not_called()
+
+    def test_meaningless_repeated_text_is_rejected_before_vectorization(self):
+        repeated_text = "advertisement " * 40
+        with patch("src.duplicate_detector.TfidfVectorizer") as vectorizer:
+            with self.assertRaises(InsufficientInformationError):
+                calculate_similarity(repeated_text, SIMILAR_ADS[0])
+        vectorizer.assert_not_called()
 
 
 if __name__ == "__main__":

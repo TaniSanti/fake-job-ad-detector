@@ -2,6 +2,11 @@ import re
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from src.input_validation import (
+    SIMILARITY_INSUFFICIENT_MESSAGE,
+    InsufficientInformationError,
+    is_sufficient_advertisement,
+)
 
 
 def normalize_text(text):
@@ -98,11 +103,11 @@ def calculate_similarity(text1, text2):
     Useful for comparing two specific advertisements directly.
     """
 
+    if not is_sufficient_advertisement(text1) or not is_sufficient_advertisement(text2):
+        raise InsufficientInformationError(SIMILARITY_INSUFFICIENT_MESSAGE)
+
     normalized_text1 = normalize_text(text1)
     normalized_text2 = normalize_text(text2)
-
-    if not normalized_text1 or not normalized_text2:
-        return 0.0
 
     vectorizer = TfidfVectorizer(
         stop_words="english",

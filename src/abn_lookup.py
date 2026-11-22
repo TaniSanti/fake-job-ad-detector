@@ -21,6 +21,17 @@ NAME_SEARCH_ENDPOINT = (
     "AbrXmlSearch.asmx/ABRSearchByNameAdvancedSimpleProtocol2017"
 )
 REQUEST_TIMEOUT_SECONDS = 10
+INVALID_ABN_MESSAGE = (
+    "This doesn't look like a valid ABN. Please check the 11 digits and try again."
+)
+ABN_NOT_FOUND_MESSAGE = (
+    "The Australian Business Register has no record for this ABN. "
+    "Check the number or confirm it with the business."
+)
+COMPANY_NAME_NOT_FOUND_MESSAGE = (
+    "The Australian Business Register found no matching business name. "
+    "Check the spelling and try again."
+)
 
 
 class ABNLookupError(Exception):
@@ -93,22 +104,14 @@ def compare_entity_name(supplied_name, returned_name):
 
 
 def format_name_match(match):
-    """Format the matched ABR name separately from its legal/entity name."""
+    """Format only the name returned by ABR's search and its ABN."""
     matching_name = (match.get("matching_name") or "").strip()
     entity_name = (match.get("entity_name") or "").strip()
     abn = match.get("abn") or "ABN unavailable"
-
-    if matching_name and entity_name and (
-        matching_name.casefold() != entity_name.casefold()
-    ):
-        return (
-            f"{matching_name} (matched name) — "
-            f"Entity: {entity_name} — ABN {abn}"
-        )
     if matching_name:
         return f"{matching_name} — ABN {abn}"
     if entity_name:
-        return f"Entity: {entity_name} — ABN {abn}"
+        return f"{entity_name} — ABN {abn}"
     return f"ABR name unavailable — ABN {abn}"
 
 
@@ -126,6 +129,17 @@ def _find_text(node, names):
     return ""
 
 
+def _find_direct_text(node, names):
+    """Find a text value among a node's immediate children only."""
+    accepted = {name.lower() for name in names}
+    for element in node:
+        if _local_name(element.tag) in accepted and element.text:
+            value = element.text.strip()
+            if value:
+                return value
+    return ""
+
+
 def _find_group(node, names):
     accepted = {name.lower() for name in names}
     for element in node.iter():
@@ -134,14 +148,14 @@ def _find_group(node, names):
     return None
 
 
-def _check_service_exception(root):
+def _check_service_exception(root, not_found_message):
     code = _find_text(root, {"exceptionCode"})
     description = _find_text(root, {"exceptionDescription"})
     if not code and not description:
         return
     safe_description = description.lower()
     if code.upper() == "SEARCH" or "no records found" in safe_description:
-        raise ABNLookupError("No matching ABR record was found.")
+        raise ABNLookupError(not_found_message)
     # Do not echo the server response: it may contain request details.
     raise ABNLookupError(
         "The ABR service could not complete this search. "
@@ -149,7 +163,7 @@ def _check_service_exception(root):
     )
 
 
-def _post_form(endpoint, parameters, authentication_guid):
+def _post_form(endpoint, parameters, authentication_guid, not_found_message):
     fields = dict(parameters)
     fields["authenticationGuid"] = authentication_guid
     request = Request(
@@ -182,21 +196,34 @@ def _post_form(endpoint, parameters, authentication_guid):
         raise ABNLookupError(
             "The ABR service returned an unexpected response."
         ) from None
-    _check_service_exception(root)
+    _check_service_exception(root, not_found_message)
     return root
 
 
 def _parse_entity(node):
     abn = _find_text(node, {"identifierValue"})
     status = _find_text(node, {"entityStatusCode"})
-    entity_name = _find_text(node, {"organisationName"})
-    if not entity_name:
-        given = _find_text(node, {"givenName"})
-        other = _find_text(node, {"otherGivenName"})
-        family = _find_text(node, {"familyName"})
-        entity_name = " ".join(part for part in (given, other, family) if part)
-
     entity_type = _find_text(node, {"entityDescription"})
+
+    # ABR returns an individual's legal name separately from any registered
+    # business name. The legal name is the entity name shown on ABN Lookup.
+    legal_name = _find_group(node, {"legalName"})
+    given = _find_text(legal_name, {"givenName"}) if legal_name is not None else ""
+    other = (
+        _find_text(legal_name, {"otherGivenName"})
+        if legal_name is not None else ""
+    )
+    family = _find_text(legal_name, {"familyName"}) if legal_name is not None else ""
+    given_names = " ".join(part for part in (given, other) if part)
+    entity_name = f"{family}, {given_names}" if family and given_names else ""
+
+    if not entity_name:
+        main_name = _find_group(node, {"mainName"})
+        if main_name is not None:
+            entity_name = _find_text(main_name, {"organisationName"})
+    if not entity_name:
+        entity_name = _find_text(node, {"organisationName"})
+
     state = _find_text(node, {"stateCode"})
     gst_group = _find_group(node, {"goodsAndServicesTax"})
     gst_status = "Registered" if gst_group is not None else "Not shown as registered"
@@ -218,7 +245,7 @@ def lookup_by_abn(abn, authentication_guid=None, secrets=None):
     """Look up a checksum-valid ABN with the current Document Style method."""
     normalized = normalize_abn(abn)
     if not is_valid_abn(normalized):
-        raise ABNLookupError("Enter a valid 11-digit ABN.")
+        raise ABNLookupError(INVALID_ABN_MESSAGE)
     guid = authentication_guid or get_authentication_guid(secrets)
     root = _post_form(
         ABN_SEARCH_ENDPOINT,
@@ -227,6 +254,7 @@ def lookup_by_abn(abn, authentication_guid=None, secrets=None):
             "includeHistoricalDetails": "N",
         },
         guid,
+        not_found_message=ABN_NOT_FOUND_MESSAGE,
     )
     entity_node = _find_group(root, {"businessEntity", "businessEntity202001"})
     if entity_node is None:
@@ -237,7 +265,7 @@ def lookup_by_abn(abn, authentication_guid=None, secrets=None):
 
 
 def search_by_name(name, authentication_guid=None, secrets=None):
-    """Search official legal and registered business names; return candidates."""
+    """Search ABR name types, retaining results containing the query text."""
     query = (name or "").strip()
     if len(query) < 2:
         raise ABNLookupError("Enter a business name with at least two characters.")
@@ -249,40 +277,72 @@ def search_by_name(name, authentication_guid=None, secrets=None):
         "name": query,
         "postcode": "",
         "legalName": "Y",
-        "tradingName": "N",
+        "tradingName": "Y",
         "businessName": "Y",
         "activeABNsOnly": "N",
         "NSW": "", "SA": "", "ACT": "", "VIC": "",
         "WA": "", "NT": "", "QLD": "", "TAS": "",
-        "searchWidth": "Narrow",
-        "minimumScore": "90",
-        "maxSearchResults": "10",
+        # Typical returns broader relevance matches than Narrow. The local
+        # substring check below removes fuzzy results that do not contain the
+        # user's actual search term.
+        "searchWidth": "Typical",
+        "minimumScore": "50",
+        "maxSearchResults": "200",
     }
-    root = _post_form(NAME_SEARCH_ENDPOINT, parameters, guid)
+    root = _post_form(
+        NAME_SEARCH_ENDPOINT,
+        parameters,
+        guid,
+        not_found_message=COMPANY_NAME_NOT_FOUND_MESSAGE,
+    )
 
     candidates = []
     seen = set()
+    query_folded = query.casefold()
     record_names = {"searchresultsrecord", "searchresult", "matchingname"}
     for node in root.iter():
         if _local_name(node.tag) not in record_names:
             continue
         abn = normalize_abn(_find_text(node, {"identifierValue", "abn"}))
-        if len(abn) != 11 or not abn.isdigit() or abn in seen:
+        if len(abn) != 11 or not abn.isdigit():
             continue
-        seen.add(abn)
-        candidates.append({
+        main_name = _find_group(node, {"mainName"})
+        entity_name = (
+            _find_text(main_name, {"organisationName"})
+            if main_name is not None else ""
+        )
+        matching_name = (
+            _find_text(node, {"fullName", "matchingName", "matchedName"})
+            or _find_text(node, {"name"})
+            # The ABR service's actual name-search XML uses organisationName
+            # for the name that matched the query.
+            or _find_direct_text(node, {"organisationName"})
+        )
+        if query_folded not in matching_name.casefold():
+            matching_name = entity_name
+        match = {
             "abn": abn,
             # The name that matched the user's query can be a business name,
             # while entity_name is the associated legal/main entity name.
-            "matching_name": (
-                _find_text(node, {"matchingName", "matchedName"})
-                or _find_text(node, {"name"})
+            "matching_name": matching_name,
+            "entity_name": entity_name,
+            "status": _find_text(
+                node, {"identifierStatus", "entityStatusCode", "abnStatus"}
             ),
-            "entity_name": _find_text(node, {"organisationName", "mainName"}),
-            "status": _find_text(node, {"entityStatusCode", "abnStatus"}),
             "state": _find_text(node, {"stateCode"}),
-            "match_score": _find_text(node, {"matchScore"}),
-        })
+            "match_score": _find_text(node, {"score", "matchScore"}),
+        }
+        # ABR ranks names fuzzily. Keep only returned matched names that
+        # actually contain the requested phrase, anywhere in the name.
+        if not match["matching_name"] or (
+            query_folded not in match["matching_name"].casefold()
+        ):
+            continue
+        candidate_key = (abn, match["matching_name"].casefold())
+        if candidate_key in seen:
+            continue
+        seen.add(candidate_key)
+        candidates.append(match)
 
     # Some response versions nest record fields without a named record node.
     if not candidates:
@@ -291,22 +351,39 @@ def search_by_name(name, authentication_guid=None, secrets=None):
                 continue
             for child in node:
                 abn = normalize_abn(_find_text(child, {"identifierValue", "abn"}))
-                if len(abn) != 11 or not abn.isdigit() or abn in seen:
+                if len(abn) != 11 or not abn.isdigit():
                     continue
-                seen.add(abn)
-                candidates.append({
+                main_name = _find_group(child, {"mainName"})
+                entity_name = (
+                    _find_text(main_name, {"organisationName"})
+                    if main_name is not None else ""
+                )
+                matching_name = (
+                    _find_text(child, {"fullName", "matchingName", "matchedName"})
+                    or _find_text(child, {"name"})
+                    or _find_direct_text(child, {"organisationName"})
+                )
+                if query_folded not in matching_name.casefold():
+                    matching_name = entity_name
+                match = {
                     "abn": abn,
-                    "matching_name": (
-                        _find_text(child, {"matchingName", "matchedName"})
-                        or _find_text(child, {"name"})
+                    "matching_name": matching_name,
+                    "entity_name": entity_name,
+                    "status": _find_text(
+                        child, {"identifierStatus", "entityStatusCode", "abnStatus"}
                     ),
-                    "entity_name": _find_text(
-                        child, {"organisationName", "mainName"}
-                    ),
-                    "status": _find_text(child, {"entityStatusCode", "abnStatus"}),
                     "state": _find_text(child, {"stateCode"}),
-                    "match_score": _find_text(child, {"matchScore"}),
-                })
+                    "match_score": _find_text(child, {"score", "matchScore"}),
+                }
+                if not match["matching_name"] or (
+                    query_folded not in match["matching_name"].casefold()
+                ):
+                    continue
+                candidate_key = (abn, match["matching_name"].casefold())
+                if candidate_key in seen:
+                    continue
+                seen.add(candidate_key)
+                candidates.append(match)
     return candidates
 
 
@@ -322,7 +399,7 @@ def _fill_missing_entity_names(matches, authentication_guid=None, secrets=None):
     enriched = []
     for match in matches:
         candidate = dict(match)
-        if not candidate.get("entity_name"):
+        if not candidate.get("entity_name") and not candidate.get("matching_name"):
             try:
                 entity = lookup_by_abn(
                     candidate.get("abn", ""),
