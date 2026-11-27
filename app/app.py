@@ -147,14 +147,6 @@ if st.button(
                 "Additional Risk Indicators"
             )
 
-            st.write(
-                "The following patterns may require "
-                "additional review."
-            )
-
-            st.write(
-                "They are not definitive evidence of fraud."
-            )
 
             for item in risk_indicators:
 
@@ -177,9 +169,8 @@ if st.button(
             )
 
         st.caption(
-            "Risk indicators are based on predefined patterns "
-            "and should not be interpreted as definitive "
-            "evidence of fraud."
+            "Rule-based indicators are screening prompts for further review; "
+            "they do not prove that an advertisement is fraudulent."
         )
 
 
