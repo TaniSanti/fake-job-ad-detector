@@ -169,7 +169,7 @@ if st.button(
             )
 
         st.caption(
-            "Rule-based indicators are screening prompts for further review; "
+            "Rule-based indicators are screening prompts for further review, "
             "they do not prove that an advertisement is fraudulent."
         )
 
