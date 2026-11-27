@@ -57,6 +57,22 @@ class TestRiskRules(unittest.TestCase):
             ),
         )
 
+    def test_no_prior_experience_with_remote_work(self):
+        self.assertIn(
+            "no_experience_remote_work",
+            self.categories(
+                "No prior experience required; work from home is available."
+            ),
+        )
+
+    def test_no_experience_needed_with_remote_work(self):
+        self.assertIn(
+            "no_experience_remote_work",
+            self.categories(
+                "No experience needed. This is a remote position."
+            ),
+        )
+
     def test_no_experience_alone_is_not_flagged(self):
         self.assertNotIn(
             "no_experience_remote_work",
@@ -140,6 +156,34 @@ class TestRiskRules(unittest.TestCase):
             "urgent_recruitment",
             self.categories(
                 "Only 20 positions are available. Apply immediately."
+            ),
+        )
+
+    def test_limited_openings_with_no_experience_remote_offer(self):
+        text = (
+            "Data entry work from home or on-site. No prior experience "
+            "required and training will be provided. Limited openings available."
+        )
+        self.assertIn("no_experience_remote_work", self.categories(text))
+        self.assertIn("urgent_recruitment", self.categories(text))
+
+    def test_limited_openings_alone_is_not_flagged(self):
+        self.assertNotIn(
+            "urgent_recruitment",
+            self.categories("Limited openings available. Apply through our website."),
+        )
+
+    def test_message_for_name_and_number_alone_is_not_flagged(self):
+        self.assertEqual(
+            self.categories("If interested, message us with your name and number."),
+            set(),
+        )
+
+    def test_numeric_hourly_pay_alone_is_not_flagged_as_high_income(self):
+        self.assertNotIn(
+            "high_income_low_effort",
+            self.categories(
+                "The role pays $38.33 per hour, or $45.55 on weekends."
             ),
         )
 

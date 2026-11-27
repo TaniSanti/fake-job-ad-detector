@@ -70,6 +70,8 @@ RISK_PATTERNS = {
         "weight": 15,
         "patterns": [
             "no experience required", "no experience necessary",
+            "no experience needed", "no prior experience required",
+            "no prior experience necessary", "no prior experience needed",
             "no previous experience", "don't need any previous experience",
             "do not need any previous experience", "without experience",
         ],
@@ -82,7 +84,17 @@ RISK_PATTERNS = {
         "weight": 10,
         "patterns": [
             "limited positions", "only 20 positions", "only 25 positions",
-            "act now", "apply immediately", "start immediately",
+            "limited openings available", "limited spots are available",
+            "limited spots available", "act now", "apply immediately",
+            "start immediately",
+        ],
+        # General claims about limited openings are common in genuine ads.
+        # For these, require another Scamwatch-style cue. Existing, more
+        # specific urgency phrases remain unchanged.
+        "requires_any": [
+            "no experience", "no prior experience", "high pay",
+            "high salary", "high income", "little effort", "no interview",
+            "apply immediately", "act now", "start immediately",
         ],
     },
     "quick_hiring_no_interview": {
